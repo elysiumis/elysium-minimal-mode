@@ -2,7 +2,7 @@
   "id": "com.elysium.minimal-mode",
   "name": "Minimal Mode",
   "version": "1.0.0",
-  "minAppVersion": "2.0.0",
+  "minAppVersion": "1.0.0",
   "author": "Elysium Team",
   "description": "Simplify Elysium's UI with monochrome icons and reduced visual effects for a cleaner, Obsidian-like experience.",
   "permissions": ["theme", "write:settings", "customize:ui"],
