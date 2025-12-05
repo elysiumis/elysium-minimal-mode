@@ -1,48 +1,228 @@
 {
   "id": "com.elysium.minimal-mode",
   "name": "Minimal Mode",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "minAppVersion": "1.0.0",
   "author": "Elysium Team",
-  "description": "Simplify Elysium's UI with monochrome icons and reduced visual effects for a cleaner, Obsidian-like experience.",
+  "description": "A comprehensive theming plugin demonstrating all available Token APIs. Customize styling, layout, and positioning of UI elements.",
   "permissions": ["theme", "write:settings", "customize:ui"],
   "main": "main.js",
-  "tags": ["theme", "minimal", "ui", "accessibility"],
+  "tags": ["theme", "minimal", "ui", "accessibility", "developer-example"],
   "settingsSchema": {
     "settings": [
       {
-        "id": "color",
+        "id": "accentColor",
         "type": "color",
         "label": "Accent Color",
-        "description": "The monochrome color used for icons and accents",
+        "description": "Primary accent color used throughout the app",
         "default": "#20a2a1"
       },
       {
-        "id": "cornerRadius",
+        "id": "buttonShape",
+        "type": "dropdown",
+        "label": "Button Shape",
+        "description": "Shape of button backgrounds",
+        "default": "none",
+        "options": [
+          { "value": "circle", "label": "Circle" },
+          { "value": "roundedRect", "label": "Rounded Rectangle" },
+          { "value": "square", "label": "Square" },
+          { "value": "none", "label": "None (No Background)" }
+        ]
+      },
+      {
+        "id": "cardShape",
+        "type": "dropdown",
+        "label": "Card Shape",
+        "description": "Shape of card containers",
+        "default": "roundedRect",
+        "options": [
+          { "value": "roundedRect", "label": "Rounded Rectangle" },
+          { "value": "square", "label": "Square" },
+          { "value": "none", "label": "None" }
+        ]
+      },
+      {
+        "id": "chipShape",
+        "type": "dropdown",
+        "label": "Chip Shape",
+        "description": "Shape of status chips and tags",
+        "default": "roundedRect",
+        "options": [
+          { "value": "capsule", "label": "Capsule" },
+          { "value": "roundedRect", "label": "Rounded Rectangle" },
+          { "value": "square", "label": "Square" }
+        ]
+      },
+      {
+        "id": "buttonHasBackground",
+        "type": "toggle",
+        "label": "Button Backgrounds",
+        "description": "Show backgrounds behind buttons",
+        "default": false
+      },
+      {
+        "id": "cardHasBackground",
+        "type": "toggle",
+        "label": "Card Backgrounds",
+        "description": "Show backgrounds on card containers",
+        "default": true
+      },
+      {
+        "id": "showShadows",
+        "type": "toggle",
+        "label": "Show Shadows",
+        "description": "Enable shadow effects on elements",
+        "default": false
+      },
+      {
+        "id": "shadowRadius",
         "type": "slider",
-        "label": "Corner Radius",
-        "description": "How rounded the corners of cards should be",
+        "label": "Shadow Radius",
+        "description": "Blur radius for shadows (when enabled)",
         "default": 4,
         "min": 0,
         "max": 20,
         "step": 1
       },
       {
-        "id": "showButtonBackgrounds",
-        "type": "toggle",
-        "label": "Show Button Backgrounds",
-        "description": "Show circular backgrounds behind floating buttons",
-        "default": false
-      },
-      {
         "id": "backgroundOpacity",
         "type": "slider",
         "label": "Background Opacity",
-        "description": "Opacity of card backgrounds",
+        "description": "Opacity of backgrounds (0-100%)",
         "default": 80,
         "min": 0,
         "max": 100,
         "step": 5
+      },
+      {
+        "id": "sidebarWidth",
+        "type": "slider",
+        "label": "Sidebar Width",
+        "description": "Width of the sidebar in points",
+        "default": 280,
+        "min": 200,
+        "max": 400,
+        "step": 10
+      },
+      {
+        "id": "buttonSize",
+        "type": "slider",
+        "label": "Button Size",
+        "description": "Standard button size in points",
+        "default": 44,
+        "min": 30,
+        "max": 60,
+        "step": 2
+      },
+      {
+        "id": "iconSize",
+        "type": "slider",
+        "label": "Icon Size",
+        "description": "Standard icon size in points",
+        "default": 24,
+        "min": 16,
+        "max": 32,
+        "step": 2
+      },
+      {
+        "id": "cornerRadius",
+        "type": "slider",
+        "label": "Corner Radius",
+        "description": "Default corner radius for elements",
+        "default": 4,
+        "min": 0,
+        "max": 24,
+        "step": 1
+      },
+      {
+        "id": "spacing",
+        "type": "slider",
+        "label": "Spacing",
+        "description": "Standard spacing between elements",
+        "default": 16,
+        "min": 8,
+        "max": 32,
+        "step": 2
+      },
+      {
+        "id": "rowHeight",
+        "type": "slider",
+        "label": "Row Height",
+        "description": "Height of list rows",
+        "default": 60,
+        "min": 40,
+        "max": 80,
+        "step": 4
+      },
+      {
+        "id": "hourHeight",
+        "type": "slider",
+        "label": "Hour Height",
+        "description": "Height of hour blocks in calendar views",
+        "default": 60,
+        "min": 40,
+        "max": 120,
+        "step": 5
+      },
+      {
+        "id": "quickEntryPosition",
+        "type": "dropdown",
+        "label": "Quick Entry Position",
+        "description": "Where the quick entry button appears",
+        "default": "bottomRight",
+        "options": [
+          { "value": "bottomRight", "label": "Bottom Right" },
+          { "value": "topRight", "label": "Top Right" },
+          { "value": "sidebar", "label": "Sidebar" },
+          { "value": "hidden", "label": "Hidden" }
+        ]
+      },
+      {
+        "id": "floatingButtonPosition",
+        "type": "dropdown",
+        "label": "Floating Button Position",
+        "description": "Where floating action buttons appear",
+        "default": "bottomRight",
+        "options": [
+          { "value": "bottomRight", "label": "Bottom Right" },
+          { "value": "bottomLeft", "label": "Bottom Left" },
+          { "value": "topRight", "label": "Top Right" },
+          { "value": "hidden", "label": "Hidden" }
+        ]
+      },
+      {
+        "id": "toolbarPosition",
+        "type": "dropdown",
+        "label": "Toolbar Position",
+        "description": "Where the toolbar appears",
+        "default": "top",
+        "options": [
+          { "value": "top", "label": "Top" },
+          { "value": "bottom", "label": "Bottom" },
+          { "value": "hidden", "label": "Hidden" }
+        ]
+      },
+      {
+        "id": "liquidGlassEnabled",
+        "type": "toggle",
+        "label": "Liquid Glass Effect",
+        "description": "Enable the liquid glass visual effect",
+        "default": false
+      },
+      {
+        "id": "monochromeEnabled",
+        "type": "toggle",
+        "label": "Monochrome Icons",
+        "description": "Use monochrome icons (uses accent color)",
+        "default": true
+      },
+      {
+        "id": "disableGlowEffects",
+        "type": "toggle",
+        "label": "Disable Glow Effects",
+        "description": "Turn off all glow effects",
+        "default": true
       }
     ]
   }

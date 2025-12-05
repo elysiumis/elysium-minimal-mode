@@ -1,56 +1,116 @@
 /**
- * Minimal Mode Plugin for Elysium
+ * Minimal Mode Plugin for Elysium - v2.0.0
  *
- * Provides an Obsidian-like aesthetic with:
- * - Monochrome icons (default: teal #20a2a1)
- * - Disabled liquid glass effects
- * - No glow effects
- * - No button backgrounds
- * - Sharp corners
- * - No shadows
+ * A comprehensive theming plugin demonstrating ALL available Token APIs.
+ * This serves as a developer example showing how to:
+ * - Use styling tokens (colors, shapes, effects)
+ * - Use layout tokens (sizes, spacing)
+ * - Use position tokens (element placement)
+ * - Use legacy monochrome APIs
+ * - Save/restore original state
+ * - Listen for settings changes
  *
- * Uses the new Theme Token API for full control
- * Settings are configurable via the plugin Settings tab
+ * Settings are configurable via the plugin Settings tab.
  */
 
-const DEFAULT_COLOR = "#20a2a1";
-const DEFAULT_CORNER_RADIUS = 4;
-const DEFAULT_SHOW_BUTTON_BACKGROUNDS = false;
-const DEFAULT_BACKGROUND_OPACITY = 80;
+// === Default Values ===
+// These match the defaults in manifest.json settingsSchema
 
-const STORAGE_KEY_ACTIVE = "minimalMode.active";
-const STORAGE_KEY_ORIGINAL_TOKENS = "minimalMode.originalTokens";
-const STORAGE_KEY_ORIGINAL_SETTINGS = "minimalMode.originalSettings";
+var DEFAULTS = {
+  // Styling tokens
+  accentColor: "#20a2a1",
+  buttonShape: "none",
+  cardShape: "roundedRect",
+  chipShape: "roundedRect",
+  buttonHasBackground: false,
+  cardHasBackground: true,
+  showShadows: false,
+  shadowRadius: 4,
+  backgroundOpacity: 80,
+
+  // Layout tokens
+  sidebarWidth: 280,
+  buttonSize: 44,
+  iconSize: 24,
+  cornerRadius: 4,
+  spacing: 16,
+  rowHeight: 60,
+  hourHeight: 60,
+
+  // Position tokens
+  quickEntryPosition: "bottomRight",
+  floatingButtonPosition: "bottomRight",
+  toolbarPosition: "top",
+
+  // Legacy settings
+  liquidGlassEnabled: false,
+  monochromeEnabled: true,
+  disableGlowEffects: true
+};
+
+// === Storage Keys ===
+var STORAGE_KEY_ACTIVE = "minimalMode.active";
+var STORAGE_KEY_ORIGINAL_TOKENS = "minimalMode.originalTokens";
+var STORAGE_KEY_ORIGINAL_SETTINGS = "minimalMode.originalSettings";
 
 /**
- * Get settings from UI settings panel with fallback to defaults
+ * Get a setting value with fallback to default
+ * @param {string} key - Setting key
+ * @returns {*} Setting value or default
  */
-function getUISettings() {
+function getSetting(key) {
   try {
-    var color = elysium.settings.getPluginSetting("color");
-    var cornerRadius = elysium.settings.getPluginSetting("cornerRadius");
-    var showButtonBackgrounds = elysium.settings.getPluginSetting("showButtonBackgrounds");
-    var backgroundOpacity = elysium.settings.getPluginSetting("backgroundOpacity");
-
-    return {
-      color: color || DEFAULT_COLOR,
-      cornerRadius: cornerRadius !== undefined ? cornerRadius : DEFAULT_CORNER_RADIUS,
-      showButtonBackgrounds: showButtonBackgrounds !== undefined ? showButtonBackgrounds : DEFAULT_SHOW_BUTTON_BACKGROUNDS,
-      backgroundOpacity: backgroundOpacity !== undefined ? backgroundOpacity : DEFAULT_BACKGROUND_OPACITY
-    };
+    var value = elysium.settings.getPluginSetting(key);
+    if (value !== undefined && value !== null) {
+      return value;
+    }
   } catch (e) {
-    console.log("[MinimalMode] Could not read UI settings, using defaults");
-    return {
-      color: DEFAULT_COLOR,
-      cornerRadius: DEFAULT_CORNER_RADIUS,
-      showButtonBackgrounds: DEFAULT_SHOW_BUTTON_BACKGROUNDS,
-      backgroundOpacity: DEFAULT_BACKGROUND_OPACITY
-    };
+    // Ignore errors
   }
+  return DEFAULTS[key];
+}
+
+/**
+ * Get all settings from UI settings panel with fallback to defaults
+ * @returns {Object} All settings
+ */
+function getAllSettings() {
+  return {
+    // Styling tokens
+    accentColor: getSetting("accentColor"),
+    buttonShape: getSetting("buttonShape"),
+    cardShape: getSetting("cardShape"),
+    chipShape: getSetting("chipShape"),
+    buttonHasBackground: getSetting("buttonHasBackground"),
+    cardHasBackground: getSetting("cardHasBackground"),
+    showShadows: getSetting("showShadows"),
+    shadowRadius: getSetting("shadowRadius"),
+    backgroundOpacity: getSetting("backgroundOpacity"),
+
+    // Layout tokens
+    sidebarWidth: getSetting("sidebarWidth"),
+    buttonSize: getSetting("buttonSize"),
+    iconSize: getSetting("iconSize"),
+    cornerRadius: getSetting("cornerRadius"),
+    spacing: getSetting("spacing"),
+    rowHeight: getSetting("rowHeight"),
+    hourHeight: getSetting("hourHeight"),
+
+    // Position tokens
+    quickEntryPosition: getSetting("quickEntryPosition"),
+    floatingButtonPosition: getSetting("floatingButtonPosition"),
+    toolbarPosition: getSetting("toolbarPosition"),
+
+    // Legacy settings
+    liquidGlassEnabled: getSetting("liquidGlassEnabled"),
+    monochromeEnabled: getSetting("monochromeEnabled"),
+    disableGlowEffects: getSetting("disableGlowEffects")
+  };
 }
 
 /**
  * Get current plugin state
+ * @returns {Object} Plugin state with active property
  */
 function getPluginState() {
   try {
@@ -64,26 +124,28 @@ function getPluginState() {
 }
 
 /**
- * Save original tokens and settings before applying minimal mode
+ * Save original tokens and settings before applying plugin settings
+ * This allows restoration when the plugin is disabled
  */
 function saveOriginalState() {
   try {
-    // Save original tokens
+    // Save all original tokens using getAllTokens()
     var tokens = elysium.ui.getAllTokens();
     elysium.storage.set(STORAGE_KEY_ORIGINAL_TOKENS, JSON.stringify(tokens));
 
-    // Save original monochrome settings
+    // Save original monochrome/legacy settings
     var monoSettings = elysium.ui.getMonochromeModeSettings();
     var liquidGlass = elysium.settings.get("liquidGlassEnabled");
 
     var original = {
       monochromeEnabled: monoSettings ? (monoSettings.enabled || false) : false,
-      monochromeColor: monoSettings ? (monoSettings.color || DEFAULT_COLOR) : DEFAULT_COLOR,
+      monochromeColor: monoSettings ? (monoSettings.color || DEFAULTS.accentColor) : DEFAULTS.accentColor,
       disableGlowEffects: monoSettings ? (monoSettings.disableGlowEffects || false) : false,
       liquidGlassEnabled: liquidGlass !== false
     };
 
     elysium.storage.set(STORAGE_KEY_ORIGINAL_SETTINGS, JSON.stringify(original));
+    console.log("[MinimalMode] Saved original state");
     return true;
   } catch (error) {
     console.error("[MinimalMode] Failed to save original state: " + error);
@@ -93,12 +155,13 @@ function saveOriginalState() {
 
 /**
  * Get saved original state
+ * @returns {Object} Original tokens and settings
  */
 function getOriginalState() {
   var tokens = {};
   var settings = {
     monochromeEnabled: false,
-    monochromeColor: DEFAULT_COLOR,
+    monochromeColor: DEFAULTS.accentColor,
     disableGlowEffects: false,
     liquidGlassEnabled: true
   };
@@ -121,73 +184,130 @@ function getOriginalState() {
 }
 
 /**
- * Apply minimal mode using settings from UI
+ * Apply all settings using the Token API
+ * This demonstrates the full power of the theming system
  */
-function applyMinimalMode() {
+function applySettings() {
   try {
-    // Get settings from UI settings panel
-    var uiSettings = getUISettings();
+    var s = getAllSettings();
 
-    // === Styling Tokens ===
+    // === STYLING TOKENS ===
+    // These control visual appearance
 
-    // Set accent color from UI settings
-    elysium.ui.setToken("accentColor", uiSettings.color);
+    // Accent color - the primary color used throughout the app
+    elysium.ui.setToken("accentColor", s.accentColor);
 
-    // Button backgrounds from UI settings
-    elysium.ui.setToken("buttonShape", uiSettings.showButtonBackgrounds ? "circle" : "none");
-    elysium.ui.setToken("buttonHasBackground", uiSettings.showButtonBackgrounds);
+    // Button shape - controls floating button backgrounds
+    // Options: "circle", "roundedRect", "square", "none"
+    elysium.ui.setToken("buttonShape", s.buttonShape);
 
-    // Corner radius from UI settings
-    elysium.ui.setToken("cardShape", uiSettings.cornerRadius <= 2 ? "square" : "roundedRect");
-    elysium.ui.setToken("cornerRadius", uiSettings.cornerRadius);
+    // Card shape - controls card container shapes
+    // Options: "roundedRect", "square", "none"
+    elysium.ui.setToken("cardShape", s.cardShape);
 
-    // Minimal chips
-    elysium.ui.setToken("chipShape", "roundedRect");
+    // Chip shape - controls status chip and tag shapes
+    // Options: "capsule", "roundedRect", "square"
+    elysium.ui.setToken("chipShape", s.chipShape);
 
-    // No shadows or glows
-    elysium.ui.setToken("showShadows", false);
+    // Button backgrounds - whether buttons have visible backgrounds
+    elysium.ui.setToken("buttonHasBackground", s.buttonHasBackground);
 
-    // Background opacity from UI settings (convert from 0-100 to 0-1)
-    elysium.ui.setToken("backgroundOpacity", uiSettings.backgroundOpacity / 100);
+    // Card backgrounds - whether cards have visible backgrounds
+    elysium.ui.setToken("cardHasBackground", s.cardHasBackground);
 
-    // === Original Monochrome APIs ===
+    // Shadows - enable/disable shadow effects
+    elysium.ui.setToken("showShadows", s.showShadows);
 
-    // Disable liquid glass
-    elysium.settings.set("liquidGlassEnabled", false);
+    // Shadow radius - blur amount for shadows (when enabled)
+    elysium.ui.setToken("shadowRadius", s.shadowRadius);
 
-    // Enable monochrome mode with color from UI settings
-    elysium.ui.setMonochromeMode(true, uiSettings.color);
+    // Background opacity - transparency of backgrounds (0-1 scale)
+    elysium.ui.setToken("backgroundOpacity", s.backgroundOpacity / 100);
 
-    // Disable glow effects
-    elysium.ui.setGlowEffects(false);
+    // === LAYOUT TOKENS ===
+    // These control sizes and spacing
 
-    console.log("[MinimalMode] Applied with color: " + uiSettings.color + ", radius: " + uiSettings.cornerRadius);
+    // Sidebar width in points
+    elysium.ui.setToken("sidebarWidth", s.sidebarWidth);
+
+    // Button size in points
+    elysium.ui.setToken("buttonSize", s.buttonSize);
+
+    // Icon size in points
+    elysium.ui.setToken("iconSize", s.iconSize);
+
+    // Corner radius for rounded elements
+    elysium.ui.setToken("cornerRadius", s.cornerRadius);
+
+    // Standard spacing between elements
+    elysium.ui.setToken("spacing", s.spacing);
+
+    // List row height
+    elysium.ui.setToken("rowHeight", s.rowHeight);
+
+    // Calendar hour block height
+    elysium.ui.setToken("hourHeight", s.hourHeight);
+
+    // === POSITION TOKENS ===
+    // These control where elements appear
+
+    // Quick entry button position
+    // Options: "bottomRight", "topRight", "sidebar", "hidden"
+    elysium.ui.setToken("quickEntryPosition", s.quickEntryPosition);
+
+    // Floating action button position
+    // Options: "bottomRight", "bottomLeft", "topRight", "hidden"
+    elysium.ui.setToken("floatingButtonPosition", s.floatingButtonPosition);
+
+    // Toolbar position
+    // Options: "top", "bottom", "hidden"
+    elysium.ui.setToken("toolbarPosition", s.toolbarPosition);
+
+    // === LEGACY APIs ===
+    // These are the original monochrome mode APIs
+
+    // Liquid glass effect - the glassmorphism visual effect
+    elysium.settings.set("liquidGlassEnabled", s.liquidGlassEnabled);
+
+    // Monochrome mode - renders icons in a single color
+    elysium.ui.setMonochromeMode(s.monochromeEnabled, s.accentColor);
+
+    // Glow effects - subtle glow around focused elements
+    elysium.ui.setGlowEffects(!s.disableGlowEffects);
+
+    console.log("[MinimalMode] Applied settings - accent: " + s.accentColor + ", corners: " + s.cornerRadius);
     return true;
   } catch (error) {
-    console.error("[MinimalMode] Failed to apply minimal mode: " + error);
+    console.error("[MinimalMode] Failed to apply settings: " + error);
     return false;
   }
 }
 
 /**
- * Restore original state
+ * Restore original state when plugin is disabled
  */
 function restoreOriginalState() {
   try {
     var original = getOriginalState();
 
-    // Restore tokens
+    // Restore all tokens that were saved
     var tokens = original.tokens;
-    if (tokens.accentColor) elysium.ui.setToken("accentColor", tokens.accentColor);
-    if (tokens.buttonShape) elysium.ui.setToken("buttonShape", tokens.buttonShape);
-    if (tokens.buttonHasBackground !== undefined) elysium.ui.setToken("buttonHasBackground", tokens.buttonHasBackground);
-    if (tokens.cardShape) elysium.ui.setToken("cardShape", tokens.cardShape);
-    if (tokens.cornerRadius) elysium.ui.setToken("cornerRadius", tokens.cornerRadius);
-    if (tokens.chipShape) elysium.ui.setToken("chipShape", tokens.chipShape);
-    if (tokens.showShadows !== undefined) elysium.ui.setToken("showShadows", tokens.showShadows);
-    if (tokens.backgroundOpacity) elysium.ui.setToken("backgroundOpacity", tokens.backgroundOpacity);
+    var tokenKeys = [
+      "accentColor", "buttonShape", "cardShape", "chipShape",
+      "buttonHasBackground", "cardHasBackground", "showShadows",
+      "shadowRadius", "backgroundOpacity", "sidebarWidth", "buttonSize",
+      "iconSize", "cornerRadius", "spacing", "rowHeight", "hourHeight",
+      "quickEntryPosition", "floatingButtonPosition", "toolbarPosition"
+    ];
 
-    // Restore original settings
+    for (var i = 0; i < tokenKeys.length; i++) {
+      var key = tokenKeys[i];
+      if (tokens[key] !== undefined) {
+        elysium.ui.setToken(key, tokens[key]);
+      }
+    }
+
+    // Restore original legacy settings
     var settings = original.settings;
     elysium.settings.set("liquidGlassEnabled", settings.liquidGlassEnabled);
     elysium.ui.setMonochromeMode(settings.monochromeEnabled, settings.monochromeColor);
@@ -202,7 +322,7 @@ function restoreOriginalState() {
 }
 
 /**
- * Enable minimal mode
+ * Enable minimal mode - saves original state and applies settings
  */
 function enableMinimalMode() {
   var state = getPluginState();
@@ -211,7 +331,7 @@ function enableMinimalMode() {
     saveOriginalState();
   }
 
-  var success = applyMinimalMode();
+  var success = applySettings();
   if (success) {
     elysium.storage.set(STORAGE_KEY_ACTIVE, true);
   }
@@ -219,7 +339,7 @@ function enableMinimalMode() {
 }
 
 /**
- * Disable minimal mode
+ * Disable minimal mode - restores original state
  */
 function disableMinimalMode() {
   var success = restoreOriginalState();
@@ -230,7 +350,7 @@ function disableMinimalMode() {
 }
 
 /**
- * Toggle minimal mode
+ * Toggle minimal mode on/off
  */
 function toggleMinimalMode() {
   var state = getPluginState();
@@ -243,19 +363,33 @@ function toggleMinimalMode() {
 
 /**
  * Refresh settings - re-apply with current UI settings
+ * Called automatically when settings change in the UI
  */
 function refreshSettings() {
   var state = getPluginState();
   if (state.active) {
-    applyMinimalMode();
+    applySettings();
     console.log("[MinimalMode] Settings refreshed");
   }
   return true;
 }
 
+/**
+ * Debug function to log all current token values
+ * Useful for developers to see what's available
+ */
+function logAllTokens() {
+  try {
+    var tokens = elysium.ui.getAllTokens();
+    console.log("[MinimalMode] Current tokens: " + JSON.stringify(tokens, null, 2));
+  } catch (e) {
+    console.error("[MinimalMode] Could not get tokens: " + e);
+  }
+}
+
 // === Plugin Initialization ===
 
-// Register commands
+// Register commands that users can invoke
 try {
   elysium.commands.register({
     id: "toggle",
@@ -280,6 +414,12 @@ try {
     name: "Refresh Settings",
     callback: refreshSettings
   });
+
+  elysium.commands.register({
+    id: "debug",
+    name: "Log All Tokens (Debug)",
+    callback: logAllTokens
+  });
 } catch (e) {
   console.error("[MinimalMode] Error registering commands: " + e);
 }
@@ -287,26 +427,29 @@ try {
 // Register lifecycle event handlers
 try {
   if (elysium.events && elysium.events.on) {
+    // onLoad - called when plugin is first loaded
     elysium.events.on("onLoad", function() {
       var state = getPluginState();
 
       if (state.active) {
-        // Re-apply minimal mode from previous session
-        applyMinimalMode();
+        // Re-apply settings from previous session
+        applySettings();
       } else {
-        // First load - enable minimal mode by default
+        // First load - enable by default
         enableMinimalMode();
       }
     });
 
-    // Listen for settings changes to auto-refresh
+    // settings.changed - called when any plugin setting changes in the UI
+    // This enables real-time preview of setting changes
     elysium.events.on("settings.changed", function(data) {
       if (data && data.key && data.key.indexOf("plugin.com.elysium.minimal-mode.setting.") === 0) {
-        console.log("[MinimalMode] Settings changed, refreshing...");
+        console.log("[MinimalMode] Setting changed: " + (data.settingId || "unknown"));
         refreshSettings();
       }
     });
 
+    // onDisable - called when plugin is disabled by user
     elysium.events.on("onDisable", function() {
       var state = getPluginState();
       if (state.active) {
@@ -314,6 +457,7 @@ try {
       }
     });
 
+    // onUnload - called when plugin is unloaded
     elysium.events.on("onUnload", function() {
       var state = getPluginState();
       if (state.active) {
@@ -321,10 +465,10 @@ try {
       }
     });
   } else {
-    // Fallback: run initialization immediately
+    // Fallback: run initialization immediately if events not available
     var state = getPluginState();
     if (state.active) {
-      applyMinimalMode();
+      applySettings();
     } else {
       enableMinimalMode();
     }
@@ -333,4 +477,4 @@ try {
   console.error("[MinimalMode] Error registering event handlers: " + e);
 }
 
-console.log("[MinimalMode] Plugin initialized");
+console.log("[MinimalMode] Plugin v2.0.0 initialized - demonstrating all Token APIs");
