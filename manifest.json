@@ -7,5 +7,43 @@
   "description": "Simplify Elysium's UI with monochrome icons and reduced visual effects for a cleaner, Obsidian-like experience.",
   "permissions": ["theme", "write:settings", "customize:ui"],
   "main": "main.js",
-  "tags": ["theme", "minimal", "ui", "accessibility"]
+  "tags": ["theme", "minimal", "ui", "accessibility"],
+  "settingsSchema": {
+    "settings": [
+      {
+        "id": "color",
+        "type": "color",
+        "label": "Accent Color",
+        "description": "The monochrome color used for icons and accents",
+        "default": "#20a2a1"
+      },
+      {
+        "id": "cornerRadius",
+        "type": "slider",
+        "label": "Corner Radius",
+        "description": "How rounded the corners of cards should be",
+        "default": 4,
+        "min": 0,
+        "max": 20,
+        "step": 1
+      },
+      {
+        "id": "showButtonBackgrounds",
+        "type": "toggle",
+        "label": "Show Button Backgrounds",
+        "description": "Show circular backgrounds behind floating buttons",
+        "default": false
+      },
+      {
+        "id": "backgroundOpacity",
+        "type": "slider",
+        "label": "Background Opacity",
+        "description": "Opacity of card backgrounds",
+        "default": 80,
+        "min": 0,
+        "max": 100,
+        "step": 5
+      }
+    ]
+  }
 }

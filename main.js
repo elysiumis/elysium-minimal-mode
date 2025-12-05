@@ -5,151 +5,198 @@
  * - Monochrome icons (default: teal #20a2a1)
  * - Disabled liquid glass effects
  * - No glow effects
+ * - No button backgrounds
+ * - Sharp corners
+ * - No shadows
+ *
+ * Uses the new Theme Token API for full control
+ * Settings are configurable via the plugin Settings tab
  */
 
 const DEFAULT_COLOR = "#20a2a1";
-const STORAGE_KEY_ACTIVE = "minimalMode.active";
-const STORAGE_KEY_COLOR = "minimalMode.color";
-const STORAGE_KEY_ORIGINAL = "minimalMode.originalSettings";
+const DEFAULT_CORNER_RADIUS = 4;
+const DEFAULT_SHOW_BUTTON_BACKGROUNDS = false;
+const DEFAULT_BACKGROUND_OPACITY = 80;
 
-// Debug helper
-function debug(msg, data) {
-  if (data !== undefined) {
-    console.log("[MinimalMode] " + msg + " " + JSON.stringify(data));
-  } else {
-    console.log("[MinimalMode] " + msg);
-  }
-}
+const STORAGE_KEY_ACTIVE = "minimalMode.active";
+const STORAGE_KEY_ORIGINAL_TOKENS = "minimalMode.originalTokens";
+const STORAGE_KEY_ORIGINAL_SETTINGS = "minimalMode.originalSettings";
 
 /**
- * Get current settings from storage or defaults
+ * Get settings from UI settings panel with fallback to defaults
  */
-function getPluginState() {
-  debug("Getting plugin state...");
+function getUISettings() {
   try {
-    const active = elysium.storage.get(STORAGE_KEY_ACTIVE);
-    const color = elysium.storage.get(STORAGE_KEY_COLOR);
-    debug("Storage values: active=" + active + ", color=" + color);
+    var color = elysium.settings.getPluginSetting("color");
+    var cornerRadius = elysium.settings.getPluginSetting("cornerRadius");
+    var showButtonBackgrounds = elysium.settings.getPluginSetting("showButtonBackgrounds");
+    var backgroundOpacity = elysium.settings.getPluginSetting("backgroundOpacity");
+
     return {
-      active: active === true || active === "true",
-      color: color || DEFAULT_COLOR
+      color: color || DEFAULT_COLOR,
+      cornerRadius: cornerRadius !== undefined ? cornerRadius : DEFAULT_CORNER_RADIUS,
+      showButtonBackgrounds: showButtonBackgrounds !== undefined ? showButtonBackgrounds : DEFAULT_SHOW_BUTTON_BACKGROUNDS,
+      backgroundOpacity: backgroundOpacity !== undefined ? backgroundOpacity : DEFAULT_BACKGROUND_OPACITY
     };
   } catch (e) {
-    debug("Error getting plugin state: " + e);
-    return { active: false, color: DEFAULT_COLOR };
+    console.log("[MinimalMode] Could not read UI settings, using defaults");
+    return {
+      color: DEFAULT_COLOR,
+      cornerRadius: DEFAULT_CORNER_RADIUS,
+      showButtonBackgrounds: DEFAULT_SHOW_BUTTON_BACKGROUNDS,
+      backgroundOpacity: DEFAULT_BACKGROUND_OPACITY
+    };
   }
 }
 
 /**
- * Save original settings before applying minimal mode
+ * Get current plugin state
  */
-function saveOriginalSettings() {
-  debug("Saving original settings...");
+function getPluginState() {
   try {
-    if (!elysium.ui) {
-      debug("ERROR: elysium.ui is undefined!");
-      return null;
-    }
-    if (!elysium.ui.getMonochromeModeSettings) {
-      debug("ERROR: elysium.ui.getMonochromeModeSettings is undefined!");
-      return null;
-    }
+    var active = elysium.storage.get(STORAGE_KEY_ACTIVE);
+    return {
+      active: active === true || active === "true"
+    };
+  } catch (e) {
+    return { active: false };
+  }
+}
 
-    const currentSettings = elysium.ui.getMonochromeModeSettings();
-    debug("Current monochrome settings: " + JSON.stringify(currentSettings));
+/**
+ * Save original tokens and settings before applying minimal mode
+ */
+function saveOriginalState() {
+  try {
+    // Save original tokens
+    var tokens = elysium.ui.getAllTokens();
+    elysium.storage.set(STORAGE_KEY_ORIGINAL_TOKENS, JSON.stringify(tokens));
 
-    const liquidGlass = elysium.settings.get("liquidGlassEnabled");
-    debug("Current liquidGlass setting: " + liquidGlass);
+    // Save original monochrome settings
+    var monoSettings = elysium.ui.getMonochromeModeSettings();
+    var liquidGlass = elysium.settings.get("liquidGlassEnabled");
 
-    const original = {
-      monochromeEnabled: currentSettings ? (currentSettings.enabled || false) : false,
-      monochromeColor: currentSettings ? (currentSettings.color || DEFAULT_COLOR) : DEFAULT_COLOR,
-      disableGlowEffects: currentSettings ? (currentSettings.disableGlowEffects || false) : false,
+    var original = {
+      monochromeEnabled: monoSettings ? (monoSettings.enabled || false) : false,
+      monochromeColor: monoSettings ? (monoSettings.color || DEFAULT_COLOR) : DEFAULT_COLOR,
+      disableGlowEffects: monoSettings ? (monoSettings.disableGlowEffects || false) : false,
       liquidGlassEnabled: liquidGlass !== false
     };
 
-    elysium.storage.set(STORAGE_KEY_ORIGINAL, JSON.stringify(original));
-    debug("Saved original settings: " + JSON.stringify(original));
-    return original;
-  } catch (error) {
-    debug("Failed to save original settings: " + error);
-    return null;
-  }
-}
-
-/**
- * Get saved original settings
- */
-function getOriginalSettings() {
-  try {
-    const saved = elysium.storage.get(STORAGE_KEY_ORIGINAL);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-  } catch (error) {
-    debug("Failed to parse original settings: " + error);
-  }
-  return {
-    monochromeEnabled: false,
-    monochromeColor: DEFAULT_COLOR,
-    disableGlowEffects: false,
-    liquidGlassEnabled: true
-  };
-}
-
-/**
- * Apply minimal mode settings
- */
-function applyMinimalMode(color) {
-  debug("Applying minimal mode with color: " + color);
-  try {
-    debug("Checking APIs...");
-    debug("elysium.settings exists: " + (!!elysium.settings));
-    debug("elysium.settings.set exists: " + (!!elysium.settings.set));
-    debug("elysium.ui exists: " + (!!elysium.ui));
-    debug("elysium.ui.setMonochromeMode exists: " + (!!elysium.ui.setMonochromeMode));
-    debug("elysium.ui.setGlowEffects exists: " + (!!elysium.ui.setGlowEffects));
-
-    // Disable liquid glass
-    debug("Setting liquidGlassEnabled to false...");
-    var result1 = elysium.settings.set("liquidGlassEnabled", false);
-    debug("liquidGlassEnabled result: " + result1);
-
-    // Enable monochrome mode with specified color
-    debug("Setting monochrome mode...");
-    var result2 = elysium.ui.setMonochromeMode(true, color);
-    debug("setMonochromeMode result: " + result2);
-
-    // Disable glow effects
-    debug("Disabling glow effects...");
-    var result3 = elysium.ui.setGlowEffects(false);
-    debug("setGlowEffects result: " + result3);
-
-    debug("Minimal mode applied successfully!");
+    elysium.storage.set(STORAGE_KEY_ORIGINAL_SETTINGS, JSON.stringify(original));
     return true;
   } catch (error) {
-    debug("Failed to apply minimal mode: " + error);
+    console.error("[MinimalMode] Failed to save original state: " + error);
     return false;
   }
 }
 
 /**
- * Restore original settings
+ * Get saved original state
  */
-function restoreOriginalSettings() {
-  debug("Restoring original settings...");
+function getOriginalState() {
+  var tokens = {};
+  var settings = {
+    monochromeEnabled: false,
+    monochromeColor: DEFAULT_COLOR,
+    disableGlowEffects: false,
+    liquidGlassEnabled: true
+  };
+
   try {
-    const original = getOriginalSettings();
-    debug("Original settings to restore: " + JSON.stringify(original));
+    var savedTokens = elysium.storage.get(STORAGE_KEY_ORIGINAL_TOKENS);
+    if (savedTokens) {
+      tokens = JSON.parse(savedTokens);
+    }
 
-    elysium.settings.set("liquidGlassEnabled", original.liquidGlassEnabled);
-    elysium.ui.setMonochromeMode(original.monochromeEnabled, original.monochromeColor);
-    elysium.ui.setGlowEffects(!original.disableGlowEffects);
+    var savedSettings = elysium.storage.get(STORAGE_KEY_ORIGINAL_SETTINGS);
+    if (savedSettings) {
+      settings = JSON.parse(savedSettings);
+    }
+  } catch (error) {
+    console.error("[MinimalMode] Failed to parse original state: " + error);
+  }
 
-    debug("Original settings restored");
+  return { tokens: tokens, settings: settings };
+}
+
+/**
+ * Apply minimal mode using settings from UI
+ */
+function applyMinimalMode() {
+  try {
+    // Get settings from UI settings panel
+    var uiSettings = getUISettings();
+
+    // === Styling Tokens ===
+
+    // Set accent color from UI settings
+    elysium.ui.setToken("accentColor", uiSettings.color);
+
+    // Button backgrounds from UI settings
+    elysium.ui.setToken("buttonShape", uiSettings.showButtonBackgrounds ? "circle" : "none");
+    elysium.ui.setToken("buttonHasBackground", uiSettings.showButtonBackgrounds);
+
+    // Corner radius from UI settings
+    elysium.ui.setToken("cardShape", uiSettings.cornerRadius <= 2 ? "square" : "roundedRect");
+    elysium.ui.setToken("cornerRadius", uiSettings.cornerRadius);
+
+    // Minimal chips
+    elysium.ui.setToken("chipShape", "roundedRect");
+
+    // No shadows or glows
+    elysium.ui.setToken("showShadows", false);
+
+    // Background opacity from UI settings (convert from 0-100 to 0-1)
+    elysium.ui.setToken("backgroundOpacity", uiSettings.backgroundOpacity / 100);
+
+    // === Original Monochrome APIs ===
+
+    // Disable liquid glass
+    elysium.settings.set("liquidGlassEnabled", false);
+
+    // Enable monochrome mode with color from UI settings
+    elysium.ui.setMonochromeMode(true, uiSettings.color);
+
+    // Disable glow effects
+    elysium.ui.setGlowEffects(false);
+
+    console.log("[MinimalMode] Applied with color: " + uiSettings.color + ", radius: " + uiSettings.cornerRadius);
     return true;
   } catch (error) {
-    debug("Failed to restore original settings: " + error);
+    console.error("[MinimalMode] Failed to apply minimal mode: " + error);
+    return false;
+  }
+}
+
+/**
+ * Restore original state
+ */
+function restoreOriginalState() {
+  try {
+    var original = getOriginalState();
+
+    // Restore tokens
+    var tokens = original.tokens;
+    if (tokens.accentColor) elysium.ui.setToken("accentColor", tokens.accentColor);
+    if (tokens.buttonShape) elysium.ui.setToken("buttonShape", tokens.buttonShape);
+    if (tokens.buttonHasBackground !== undefined) elysium.ui.setToken("buttonHasBackground", tokens.buttonHasBackground);
+    if (tokens.cardShape) elysium.ui.setToken("cardShape", tokens.cardShape);
+    if (tokens.cornerRadius) elysium.ui.setToken("cornerRadius", tokens.cornerRadius);
+    if (tokens.chipShape) elysium.ui.setToken("chipShape", tokens.chipShape);
+    if (tokens.showShadows !== undefined) elysium.ui.setToken("showShadows", tokens.showShadows);
+    if (tokens.backgroundOpacity) elysium.ui.setToken("backgroundOpacity", tokens.backgroundOpacity);
+
+    // Restore original settings
+    var settings = original.settings;
+    elysium.settings.set("liquidGlassEnabled", settings.liquidGlassEnabled);
+    elysium.ui.setMonochromeMode(settings.monochromeEnabled, settings.monochromeColor);
+    elysium.ui.setGlowEffects(!settings.disableGlowEffects);
+
+    console.log("[MinimalMode] Restored original settings");
+    return true;
+  } catch (error) {
+    console.error("[MinimalMode] Failed to restore original state: " + error);
     return false;
   }
 }
@@ -158,14 +205,13 @@ function restoreOriginalSettings() {
  * Enable minimal mode
  */
 function enableMinimalMode() {
-  debug("enableMinimalMode called");
-  const state = getPluginState();
+  var state = getPluginState();
 
   if (!state.active) {
-    saveOriginalSettings();
+    saveOriginalState();
   }
 
-  const success = applyMinimalMode(state.color);
+  var success = applyMinimalMode();
   if (success) {
     elysium.storage.set(STORAGE_KEY_ACTIVE, true);
   }
@@ -176,8 +222,7 @@ function enableMinimalMode() {
  * Disable minimal mode
  */
 function disableMinimalMode() {
-  debug("disableMinimalMode called");
-  const success = restoreOriginalSettings();
+  var success = restoreOriginalState();
   if (success) {
     elysium.storage.set(STORAGE_KEY_ACTIVE, false);
   }
@@ -188,8 +233,7 @@ function disableMinimalMode() {
  * Toggle minimal mode
  */
 function toggleMinimalMode() {
-  debug("toggleMinimalMode called");
-  const state = getPluginState();
+  var state = getPluginState();
   if (state.active) {
     return disableMinimalMode();
   } else {
@@ -198,48 +242,20 @@ function toggleMinimalMode() {
 }
 
 /**
- * Set the monochrome color
+ * Refresh settings - re-apply with current UI settings
  */
-function setColor(newColor) {
-  if (!/^#[0-9A-Fa-f]{6}$/.test(newColor)) {
-    debug("Invalid color format: " + newColor);
-    return false;
-  }
-
-  elysium.storage.set(STORAGE_KEY_COLOR, newColor);
-
-  const state = getPluginState();
+function refreshSettings() {
+  var state = getPluginState();
   if (state.active) {
-    elysium.ui.setMonochromeMode(true, newColor);
+    applyMinimalMode();
+    console.log("[MinimalMode] Settings refreshed");
   }
-
-  debug("Monochrome color set to: " + newColor);
   return true;
 }
 
-// Initialize plugin on load
-debug("=== MINIMAL MODE PLUGIN INITIALIZING ===");
-
-// Check what APIs are available
-debug("typeof elysium: " + typeof elysium);
-if (typeof elysium !== 'undefined') {
-  debug("elysium.commands: " + (!!elysium.commands));
-  debug("elysium.storage: " + (!!elysium.storage));
-  debug("elysium.settings: " + (!!elysium.settings));
-  debug("elysium.ui: " + (!!elysium.ui));
-  debug("elysium.events: " + (!!elysium.events));
-
-  if (elysium.ui) {
-    debug("elysium.ui.setMonochromeMode: " + (!!elysium.ui.setMonochromeMode));
-    debug("elysium.ui.setGlowEffects: " + (!!elysium.ui.setGlowEffects));
-    debug("elysium.ui.getMonochromeModeSettings: " + (!!elysium.ui.getMonochromeModeSettings));
-  }
-} else {
-  debug("ERROR: elysium is undefined!");
-}
+// === Plugin Initialization ===
 
 // Register commands
-debug("Registering commands...");
 try {
   elysium.commands.register({
     id: "toggle",
@@ -260,75 +276,61 @@ try {
   });
 
   elysium.commands.register({
-    id: "set-color",
-    name: "Set Monochrome Color",
-    callback: function(args) {
-      if (args && args.color) {
-        return setColor(args.color);
-      }
-      return setColor(DEFAULT_COLOR);
-    }
+    id: "refresh",
+    name: "Refresh Settings",
+    callback: refreshSettings
   });
-  debug("Commands registered successfully");
 } catch (e) {
-  debug("Error registering commands: " + e);
+  console.error("[MinimalMode] Error registering commands: " + e);
 }
 
 // Register lifecycle event handlers
-debug("Registering event handlers...");
 try {
   if (elysium.events && elysium.events.on) {
     elysium.events.on("onLoad", function() {
-      debug("=== onLoad EVENT FIRED ===");
-
-      // Auto-enable on first load
-      const state = getPluginState();
-      debug("Current state: " + JSON.stringify(state));
+      var state = getPluginState();
 
       if (state.active) {
-        debug("Re-applying minimal mode from previous session");
-        applyMinimalMode(state.color);
+        // Re-apply minimal mode from previous session
+        applyMinimalMode();
       } else {
-        debug("First load - enabling minimal mode");
+        // First load - enable minimal mode by default
         enableMinimalMode();
       }
+    });
 
-      debug("=== onLoad COMPLETE ===");
+    // Listen for settings changes to auto-refresh
+    elysium.events.on("settings.changed", function(data) {
+      if (data && data.key && data.key.indexOf("plugin.com.elysium.minimal-mode.setting.") === 0) {
+        console.log("[MinimalMode] Settings changed, refreshing...");
+        refreshSettings();
+      }
     });
 
     elysium.events.on("onDisable", function() {
-      debug("Plugin disabled");
-      const state = getPluginState();
+      var state = getPluginState();
       if (state.active) {
-        restoreOriginalSettings();
+        restoreOriginalState();
       }
     });
 
     elysium.events.on("onUnload", function() {
-      debug("Plugin unloaded");
-      const state = getPluginState();
+      var state = getPluginState();
       if (state.active) {
-        restoreOriginalSettings();
+        restoreOriginalState();
       }
     });
-
-    debug("Event handlers registered successfully");
   } else {
-    debug("ERROR: elysium.events.on not available!");
-
     // Fallback: run initialization immediately
-    debug("Running initialization immediately as fallback...");
-    const state = getPluginState();
+    var state = getPluginState();
     if (state.active) {
-      debug("Re-applying minimal mode from previous session");
-      applyMinimalMode(state.color);
+      applyMinimalMode();
     } else {
-      debug("First load - enabling minimal mode");
       enableMinimalMode();
     }
   }
 } catch (e) {
-  debug("Error registering event handlers: " + e);
+  console.error("[MinimalMode] Error registering event handlers: " + e);
 }
 
-debug("=== MINIMAL MODE PLUGIN INITIALIZATION COMPLETE ===");
+console.log("[MinimalMode] Plugin initialized");
