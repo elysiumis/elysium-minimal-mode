@@ -1,10 +1,10 @@
 {
   "id": "com.elysium.minimal-mode",
   "name": "Minimal Mode",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "minAppVersion": "1.0.0",
   "author": "Elysium Team",
-  "description": "A comprehensive theming plugin demonstrating all available Token APIs. Customize styling, layout, and positioning of UI elements.",
+  "description": "A comprehensive theming plugin demonstrating the hierarchical Token API. Customize per-entity-type calendar colors, styling, layout, and UI positioning. Includes OpenTime export/import hooks for portable plugin data.",
   "permissions": ["theme", "write:settings", "customize:ui"],
   "main": "main.js",
   "tags": ["theme", "minimal", "ui", "accessibility", "developer-example"],
@@ -16,6 +16,48 @@
         "label": "Accent Color",
         "description": "Primary accent color used throughout the app",
         "default": "#20a2a1"
+      },
+      {
+        "id": "goalBlockColor",
+        "type": "color",
+        "label": "Goal Block Color",
+        "description": "Calendar block color for Goals (hierarchical token: calendar.block.goal.backgroundColor)",
+        "default": "#FF6B6B"
+      },
+      {
+        "id": "taskBlockColor",
+        "type": "color",
+        "label": "Task Block Color",
+        "description": "Calendar block color for Tasks (hierarchical token: calendar.block.task.backgroundColor)",
+        "default": "#4ECDC4"
+      },
+      {
+        "id": "eventBlockColor",
+        "type": "color",
+        "label": "Event Block Color",
+        "description": "Calendar block color for Events (hierarchical token: calendar.block.event.backgroundColor)",
+        "default": "#45B7D1"
+      },
+      {
+        "id": "habitBlockColor",
+        "type": "color",
+        "label": "Habit Block Color",
+        "description": "Calendar block color for Habits (hierarchical token: calendar.block.habit.backgroundColor)",
+        "default": "#96CEB4"
+      },
+      {
+        "id": "appointmentBlockColor",
+        "type": "color",
+        "label": "Appointment Block Color",
+        "description": "Calendar block color for Appointments (hierarchical token: calendar.block.appointment.backgroundColor)",
+        "default": "#DDA0DD"
+      },
+      {
+        "id": "reminderBlockColor",
+        "type": "color",
+        "label": "Reminder Block Color",
+        "description": "Calendar block color for Reminders (hierarchical token: calendar.block.reminder.backgroundColor)",
+        "default": "#F7DC6F"
       },
       {
         "id": "buttonShape",

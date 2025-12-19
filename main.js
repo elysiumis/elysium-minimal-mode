@@ -1,8 +1,17 @@
 /**
- * Minimal Mode Plugin for Elysium - v2.0.0
+ * Minimal Mode Plugin for Elysium - v3.0.0
  *
  * A comprehensive theming plugin demonstrating ALL available Token APIs.
  * This serves as a developer example showing how to:
+ *
+ * NEW in v3.0.0 - Hierarchical Token System:
+ * - Use elysium.ui.tokens.setBatch() for efficient batch updates
+ * - Use hierarchical paths like "calendar.block.goal.backgroundColor"
+ * - Set per-entity-type styling (different colors for goals vs tasks)
+ * - Use elysium.ui.elements.getAll() to discover customizable elements
+ * - Use OpenTime export/import hooks for data portability
+ *
+ * Legacy (still supported):
  * - Use styling tokens (colors, shapes, effects)
  * - Use layout tokens (sizes, spacing)
  * - Use position tokens (element placement)
@@ -46,13 +55,23 @@ var DEFAULTS = {
   liquidGlassEnabled: false,
   monochromeEnabled: true,
   applyToCalendarBlocks: false,
-  disableGlowEffects: true
+  disableGlowEffects: true,
+
+  // NEW: Per-entity calendar block colors (hierarchical tokens)
+  // These demonstrate the new hierarchical token system
+  goalBlockColor: "#FF6B6B",      // Coral red for goals
+  taskBlockColor: "#4ECDC4",      // Teal for tasks
+  eventBlockColor: "#45B7D1",     // Sky blue for events
+  habitBlockColor: "#96CEB4",     // Sage green for habits
+  appointmentBlockColor: "#DDA0DD", // Plum for appointments
+  reminderBlockColor: "#F7DC6F"   // Golden for reminders
 };
 
 // === Storage Keys ===
 var STORAGE_KEY_ACTIVE = "minimalMode.active";
 var STORAGE_KEY_ORIGINAL_TOKENS = "minimalMode.originalTokens";
 var STORAGE_KEY_ORIGINAL_SETTINGS = "minimalMode.originalSettings";
+var STORAGE_KEY_ORIGINAL_HIERARCHICAL = "minimalMode.originalHierarchical";
 
 /**
  * Get a setting value with fallback to default
@@ -106,7 +125,15 @@ function getAllSettings() {
     liquidGlassEnabled: getSetting("liquidGlassEnabled"),
     monochromeEnabled: getSetting("monochromeEnabled"),
     applyToCalendarBlocks: getSetting("applyToCalendarBlocks"),
-    disableGlowEffects: getSetting("disableGlowEffects")
+    disableGlowEffects: getSetting("disableGlowEffects"),
+
+    // Per-entity calendar block colors
+    goalBlockColor: getSetting("goalBlockColor"),
+    taskBlockColor: getSetting("taskBlockColor"),
+    eventBlockColor: getSetting("eventBlockColor"),
+    habitBlockColor: getSetting("habitBlockColor"),
+    appointmentBlockColor: getSetting("appointmentBlockColor"),
+    reminderBlockColor: getSetting("reminderBlockColor")
   };
 }
 
@@ -148,6 +175,17 @@ function saveOriginalState() {
     };
 
     elysium.storage.set(STORAGE_KEY_ORIGINAL_SETTINGS, JSON.stringify(original));
+
+    // NEW: Save original hierarchical tokens
+    // Query for any existing calendar block tokens
+    try {
+      var hierarchicalTokens = elysium.ui.tokens.query("calendar.block.*");
+      elysium.storage.set(STORAGE_KEY_ORIGINAL_HIERARCHICAL, JSON.stringify(hierarchicalTokens || {}));
+    } catch (e) {
+      // Hierarchical tokens API might not be available - that's ok
+      elysium.storage.set(STORAGE_KEY_ORIGINAL_HIERARCHICAL, "{}");
+    }
+
     console.log("[MinimalMode] Saved original state");
     return true;
   } catch (error) {
@@ -169,6 +207,7 @@ function getOriginalState() {
     disableGlowEffects: false,
     liquidGlassEnabled: true
   };
+  var hierarchical = {};
 
   try {
     var savedTokens = elysium.storage.get(STORAGE_KEY_ORIGINAL_TOKENS);
@@ -180,109 +219,101 @@ function getOriginalState() {
     if (savedSettings) {
       settings = JSON.parse(savedSettings);
     }
+
+    var savedHierarchical = elysium.storage.get(STORAGE_KEY_ORIGINAL_HIERARCHICAL);
+    if (savedHierarchical) {
+      hierarchical = JSON.parse(savedHierarchical);
+    }
   } catch (error) {
     console.error("[MinimalMode] Failed to parse original state: " + error);
   }
 
-  return { tokens: tokens, settings: settings };
+  return { tokens: tokens, settings: settings, hierarchical: hierarchical };
 }
 
 /**
  * Apply all settings using the Token API
  * This demonstrates the full power of the theming system
+ *
+ * NEW in v3.0.0: Uses hierarchical tokens for per-entity styling
  */
 function applySettings() {
   try {
     var s = getAllSettings();
 
-    // === STYLING TOKENS ===
-    // These control visual appearance
+    // === HIERARCHICAL TOKENS (NEW in v3.0.0) ===
+    // Use setBatch for efficient updates - this is the recommended approach
+    // for setting multiple tokens at once
 
-    // Accent color - the primary color used throughout the app
+    // Per-entity-type calendar block colors
+    // These use the hierarchical path format: component.subComponent.variant.property
+    var hierarchicalTokens = {};
+
+    // Only set entity-specific colors if NOT using monochrome calendar mode
+    if (!s.applyToCalendarBlocks) {
+      hierarchicalTokens = {
+        // Calendar block colors per entity type
+        "calendar.block.goal.backgroundColor": s.goalBlockColor,
+        "calendar.block.task.backgroundColor": s.taskBlockColor,
+        "calendar.block.event.backgroundColor": s.eventBlockColor,
+        "calendar.block.habit.backgroundColor": s.habitBlockColor,
+        "calendar.block.appointment.backgroundColor": s.appointmentBlockColor,
+        "calendar.block.reminder.backgroundColor": s.reminderBlockColor,
+
+        // Global corner radius (applies as fallback)
+        "global.cornerRadius": s.cornerRadius,
+
+        // Global shadow settings
+        "global.showShadows": s.showShadows,
+        "global.shadowRadius": s.shadowRadius
+      };
+    }
+
+    // Apply hierarchical tokens using the new batch API
+    try {
+      if (elysium.ui.tokens && elysium.ui.tokens.setBatch) {
+        elysium.ui.tokens.setBatch(hierarchicalTokens);
+        console.log("[MinimalMode] Applied " + Object.keys(hierarchicalTokens).length + " hierarchical tokens");
+      }
+    } catch (e) {
+      console.log("[MinimalMode] Hierarchical tokens API not available, using legacy API");
+    }
+
+    // === LEGACY TOKENS ===
+    // These still work and are useful for non-hierarchical settings
+
+    // Styling tokens
     elysium.ui.setToken("accentColor", s.accentColor);
-
-    // Button shape - controls floating button backgrounds
-    // Options: "circle", "roundedRect", "square", "none"
     elysium.ui.setToken("buttonShape", s.buttonShape);
-
-    // Card shape - controls card container shapes
-    // Options: "roundedRect", "square", "none"
     elysium.ui.setToken("cardShape", s.cardShape);
-
-    // Chip shape - controls status chip and tag shapes
-    // Options: "capsule", "roundedRect", "square"
     elysium.ui.setToken("chipShape", s.chipShape);
-
-    // Button backgrounds - whether buttons have visible backgrounds
     elysium.ui.setToken("buttonHasBackground", s.buttonHasBackground);
-
-    // Card backgrounds - whether cards have visible backgrounds
     elysium.ui.setToken("cardHasBackground", s.cardHasBackground);
-
-    // Shadows - enable/disable shadow effects
     elysium.ui.setToken("showShadows", s.showShadows);
-
-    // Shadow radius - blur amount for shadows (when enabled)
     elysium.ui.setToken("shadowRadius", s.shadowRadius);
-
-    // Background opacity - transparency of backgrounds (0-1 scale)
     elysium.ui.setToken("backgroundOpacity", s.backgroundOpacity / 100);
 
-    // === LAYOUT TOKENS ===
-    // These control sizes and spacing
-
-    // Sidebar width in points
+    // Layout tokens
     elysium.ui.setToken("sidebarWidth", s.sidebarWidth);
-
-    // Button size in points
     elysium.ui.setToken("buttonSize", s.buttonSize);
-
-    // Icon size in points
     elysium.ui.setToken("iconSize", s.iconSize);
-
-    // Corner radius for rounded elements
     elysium.ui.setToken("cornerRadius", s.cornerRadius);
-
-    // Standard spacing between elements
     elysium.ui.setToken("spacing", s.spacing);
-
-    // List row height
     elysium.ui.setToken("rowHeight", s.rowHeight);
-
-    // Calendar hour block height
     elysium.ui.setToken("hourHeight", s.hourHeight);
 
-    // === POSITION TOKENS ===
-    // These control where elements appear
-
-    // Quick entry button position
-    // Options: "bottomRight", "topRight", "sidebar", "hidden"
+    // Position tokens
     elysium.ui.setToken("quickEntryPosition", s.quickEntryPosition);
-
-    // Floating action button position
-    // Options: "bottomRight", "bottomLeft", "topRight", "hidden"
     elysium.ui.setToken("floatingButtonPosition", s.floatingButtonPosition);
-
-    // Toolbar position
-    // Options: "top", "bottom", "hidden"
     elysium.ui.setToken("toolbarPosition", s.toolbarPosition);
 
     // === LEGACY APIs ===
-    // These are the original monochrome mode APIs
-
-    // Liquid glass effect - the glassmorphism visual effect
     elysium.settings.set("liquidGlassEnabled", s.liquidGlassEnabled);
-
-    // Monochrome mode - renders icons in a single color
     elysium.ui.setMonochromeMode(s.monochromeEnabled, s.accentColor);
-
-    // Apply monochrome to calendar blocks (off by default to preserve user-set colors)
     elysium.ui.setMonochromeCalendar(s.applyToCalendarBlocks);
-
-    // Glow effects - subtle glow around focused elements
     elysium.ui.setGlowEffects(!s.disableGlowEffects);
 
-    console.log("[MinimalMode] Applied settings - accent: " + s.accentColor + ", corners: " + s.cornerRadius + ", calendarBlocks: " + s.applyToCalendarBlocks);
+    console.log("[MinimalMode] Applied settings - accent: " + s.accentColor + ", corners: " + s.cornerRadius);
     return true;
   } catch (error) {
     console.error("[MinimalMode] Failed to apply settings: " + error);
@@ -297,7 +328,17 @@ function restoreOriginalState() {
   try {
     var original = getOriginalState();
 
-    // Restore all tokens that were saved
+    // Clear hierarchical tokens set by this plugin
+    try {
+      if (elysium.ui.tokens && elysium.ui.tokens.clear) {
+        elysium.ui.tokens.clear();
+        console.log("[MinimalMode] Cleared hierarchical tokens");
+      }
+    } catch (e) {
+      // Hierarchical API not available
+    }
+
+    // Restore all legacy tokens that were saved
     var tokens = original.tokens;
     var tokenKeys = [
       "accentColor", "buttonShape", "cardShape", "chipShape",
@@ -383,16 +424,94 @@ function refreshSettings() {
 }
 
 /**
+ * NEW: Debug function to log all customizable elements
+ * Demonstrates the element discovery API
+ */
+function logCustomizableElements() {
+  try {
+    if (elysium.ui.elements && elysium.ui.elements.getAll) {
+      var elements = elysium.ui.elements.getAll();
+      console.log("[MinimalMode] Customizable elements:");
+      console.log(JSON.stringify(elements, null, 2));
+
+      // Also show just for calendar component
+      var calendarElements = elysium.ui.elements.getForComponent("calendar");
+      console.log("[MinimalMode] Calendar elements:");
+      console.log(JSON.stringify(calendarElements, null, 2));
+    } else {
+      console.log("[MinimalMode] Element discovery API not available");
+    }
+  } catch (e) {
+    console.error("[MinimalMode] Could not get elements: " + e);
+  }
+}
+
+/**
  * Debug function to log all current token values
  * Useful for developers to see what's available
  */
 function logAllTokens() {
   try {
+    // Legacy tokens
     var tokens = elysium.ui.getAllTokens();
-    console.log("[MinimalMode] Current tokens: " + JSON.stringify(tokens, null, 2));
+    console.log("[MinimalMode] Legacy tokens:");
+    console.log(JSON.stringify(tokens, null, 2));
+
+    // Hierarchical tokens
+    try {
+      if (elysium.ui.tokens && elysium.ui.tokens.query) {
+        var hierarchical = elysium.ui.tokens.query("*");
+        console.log("[MinimalMode] Hierarchical tokens:");
+        console.log(JSON.stringify(hierarchical, null, 2));
+      }
+    } catch (e) {
+      console.log("[MinimalMode] Hierarchical tokens query not available");
+    }
   } catch (e) {
     console.error("[MinimalMode] Could not get tokens: " + e);
   }
+}
+
+// === OpenTime Export/Import Hooks (NEW in v3.0.0) ===
+// This demonstrates how plugins can include their data in OpenTime exports
+
+try {
+  if (elysium.opentime && elysium.opentime.registerExportHook) {
+    // Register export hook - adds plugin settings to OpenTime exports
+    elysium.opentime.registerExportHook({
+      id: "minimal-mode-settings",
+      callback: function() {
+        // Return plugin settings to be included in export
+        var state = getPluginState();
+        if (!state.active) {
+          return null; // Don't export if plugin is not active
+        }
+
+        return {
+          version: "3.0.0",
+          active: true,
+          settings: getAllSettings()
+        };
+      }
+    });
+
+    // Register import hook - restores plugin settings from OpenTime imports
+    elysium.opentime.registerImportHook({
+      id: "minimal-mode-settings",
+      callback: function(data) {
+        if (data && data.active && data.settings) {
+          console.log("[MinimalMode] Restoring settings from OpenTime import");
+          // Could restore settings here if needed
+          // For now, just log that data was received
+          console.log("[MinimalMode] Import data version: " + data.version);
+        }
+      }
+    });
+
+    console.log("[MinimalMode] Registered OpenTime hooks");
+  }
+} catch (e) {
+  console.log("[MinimalMode] OpenTime hooks not available: " + e);
 }
 
 // === Plugin Initialization ===
@@ -424,9 +543,15 @@ try {
   });
 
   elysium.commands.register({
-    id: "debug",
+    id: "debug-tokens",
     name: "Log All Tokens (Debug)",
     callback: logAllTokens
+  });
+
+  elysium.commands.register({
+    id: "debug-elements",
+    name: "Log Customizable Elements (Debug)",
+    callback: logCustomizableElements
   });
 } catch (e) {
   console.error("[MinimalMode] Error registering commands: " + e);
@@ -485,4 +610,4 @@ try {
   console.error("[MinimalMode] Error registering event handlers: " + e);
 }
 
-console.log("[MinimalMode] Plugin v2.0.0 initialized - demonstrating all Token APIs");
+console.log("[MinimalMode] Plugin v3.0.0 initialized - demonstrating Hierarchical Token APIs");
