@@ -14,14 +14,14 @@
         "id": "accentColor",
         "type": "color",
         "label": "Accent Color",
-        "description": "Primary accent color for buttons, selection highlights, links, and interactive elements throughout the app.",
+        "description": "Primary accent color used throughout the app",
         "default": "#20a2a1"
       },
       {
         "id": "buttonShape",
         "type": "dropdown",
         "label": "Button Shape",
-        "description": "Shape of floating action buttons (Quick Entry, Calendar, Notes) in the bottom menu bar on iOS.",
+        "description": "Shape of button backgrounds",
         "default": "none",
         "options": [
           { "value": "circle", "label": "Circle" },
@@ -34,7 +34,7 @@
         "id": "cardShape",
         "type": "dropdown",
         "label": "Card Shape",
-        "description": "Shape of list item cards (Goals, Tasks, Reminders, etc.) in the sidebar list views.",
+        "description": "Shape of card containers",
         "default": "roundedRect",
         "options": [
           { "value": "roundedRect", "label": "Rounded Rectangle" },
@@ -46,7 +46,7 @@
         "id": "chipShape",
         "type": "dropdown",
         "label": "Chip Shape",
-        "description": "Shape of status chips (Active, Completed, etc.) and tags shown on list items.",
+        "description": "Shape of status chips and tags",
         "default": "roundedRect",
         "options": [
           { "value": "capsule", "label": "Capsule" },
@@ -58,28 +58,28 @@
         "id": "buttonHasBackground",
         "type": "toggle",
         "label": "Button Backgrounds",
-        "description": "Show background behind floating buttons. When off, buttons appear as icons only.",
+        "description": "Show backgrounds behind buttons",
         "default": false
       },
       {
         "id": "cardHasBackground",
         "type": "toggle",
         "label": "Card Backgrounds",
-        "description": "Show background on list item cards. When off, cards blend into the list background.",
+        "description": "Show backgrounds on card containers",
         "default": true
       },
       {
         "id": "showShadows",
         "type": "toggle",
         "label": "Show Shadows",
-        "description": "Enable shadow and glow effects on cards, buttons, and focused elements.",
+        "description": "Enable shadow effects on elements",
         "default": false
       },
       {
         "id": "shadowRadius",
         "type": "slider",
         "label": "Shadow Radius",
-        "description": "Blur radius for shadows when enabled. Higher values create softer, more diffuse shadows.",
+        "description": "Blur radius for shadows (when enabled)",
         "default": 4,
         "min": 0,
         "max": 20,
@@ -89,7 +89,7 @@
         "id": "backgroundOpacity",
         "type": "slider",
         "label": "Background Opacity",
-        "description": "Opacity of card and container backgrounds (0-100%). Lower values make backgrounds more transparent.",
+        "description": "Opacity of backgrounds (0-100%)",
         "default": 80,
         "min": 0,
         "max": 100,
@@ -99,7 +99,7 @@
         "id": "sidebarWidth",
         "type": "slider",
         "label": "Sidebar Width",
-        "description": "Width of the left sidebar list panel on iPad and macOS (in points).",
+        "description": "Width of the sidebar in points",
         "default": 280,
         "min": 200,
         "max": 400,
@@ -109,7 +109,7 @@
         "id": "buttonSize",
         "type": "slider",
         "label": "Button Size",
-        "description": "Size of floating action buttons in the bottom menu bar (in points).",
+        "description": "Standard button size in points",
         "default": 44,
         "min": 30,
         "max": 60,
@@ -119,7 +119,7 @@
         "id": "iconSize",
         "type": "slider",
         "label": "Icon Size",
-        "description": "Size of icons within buttons and list items (in points).",
+        "description": "Standard icon size in points",
         "default": 24,
         "min": 16,
         "max": 32,
@@ -129,7 +129,7 @@
         "id": "cornerRadius",
         "type": "slider",
         "label": "Corner Radius",
-        "description": "Rounded corner radius for cards, buttons, and containers. 0 = square corners.",
+        "description": "Default corner radius for elements",
         "default": 4,
         "min": 0,
         "max": 24,
@@ -139,7 +139,7 @@
         "id": "spacing",
         "type": "slider",
         "label": "Spacing",
-        "description": "Standard spacing between elements in lists and layouts (in points).",
+        "description": "Standard spacing between elements",
         "default": 16,
         "min": 8,
         "max": 32,
@@ -149,7 +149,7 @@
         "id": "rowHeight",
         "type": "slider",
         "label": "Row Height",
-        "description": "Minimum height of list rows for Goals, Tasks, Reminders, etc. (in points).",
+        "description": "Height of list rows",
         "default": 60,
         "min": 40,
         "max": 80,
@@ -159,7 +159,7 @@
         "id": "hourHeight",
         "type": "slider",
         "label": "Hour Height",
-        "description": "Height of each hour block in calendar day/week views (in points). Affects event density.",
+        "description": "Height of hour blocks in calendar views",
         "default": 60,
         "min": 40,
         "max": 120,
@@ -169,7 +169,7 @@
         "id": "quickEntryPosition",
         "type": "dropdown",
         "label": "Quick Entry Position",
-        "description": "Position of the Quick Entry (natural language input) button. Choose 'Hidden' to remove it.",
+        "description": "Where the quick entry button appears",
         "default": "bottomRight",
         "options": [
           { "value": "bottomRight", "label": "Bottom Right" },
@@ -182,7 +182,7 @@
         "id": "floatingButtonPosition",
         "type": "dropdown",
         "label": "Floating Button Position",
-        "description": "Default position for all floating action buttons (Calendar, Notes, etc.). Choose 'Hidden' to remove them.",
+        "description": "Where floating action buttons appear",
         "default": "bottomRight",
         "options": [
           { "value": "bottomRight", "label": "Bottom Right" },
@@ -195,7 +195,7 @@
         "id": "toolbarPosition",
         "type": "dropdown",
         "label": "Toolbar Position",
-        "description": "Position of the main toolbar. Note: Not all views support all positions.",
+        "description": "Where the toolbar appears",
         "default": "top",
         "options": [
           { "value": "top", "label": "Top" },
@@ -207,21 +207,28 @@
         "id": "liquidGlassEnabled",
         "type": "toggle",
         "label": "Liquid Glass Effect",
-        "description": "Enable iOS 26+ liquid glass blur effect on cards and overlays. Requires iOS 26+.",
+        "description": "Enable the liquid glass visual effect",
         "default": false
       },
       {
         "id": "monochromeEnabled",
         "type": "toggle",
         "label": "Monochrome Icons",
-        "description": "Render all status icons in a single color (your accent color) instead of their default colors.",
+        "description": "Use monochrome icons (uses accent color)",
         "default": true
+      },
+      {
+        "id": "applyToCalendarBlocks",
+        "type": "toggle",
+        "label": "Apply to Calendar Blocks",
+        "description": "Also apply monochrome to calendar event blocks (off by default to preserve user-set colors)",
+        "default": false
       },
       {
         "id": "disableGlowEffects",
         "type": "toggle",
         "label": "Disable Glow Effects",
-        "description": "Turn off all glow/highlight effects on focused elements and priority indicators.",
+        "description": "Turn off all glow effects",
         "default": true
       }
     ]

@@ -45,6 +45,7 @@ var DEFAULTS = {
   // Legacy settings
   liquidGlassEnabled: false,
   monochromeEnabled: true,
+  applyToCalendarBlocks: false,
   disableGlowEffects: true
 };
 
@@ -104,6 +105,7 @@ function getAllSettings() {
     // Legacy settings
     liquidGlassEnabled: getSetting("liquidGlassEnabled"),
     monochromeEnabled: getSetting("monochromeEnabled"),
+    applyToCalendarBlocks: getSetting("applyToCalendarBlocks"),
     disableGlowEffects: getSetting("disableGlowEffects")
   };
 }
@@ -140,6 +142,7 @@ function saveOriginalState() {
     var original = {
       monochromeEnabled: monoSettings ? (monoSettings.enabled || false) : false,
       monochromeColor: monoSettings ? (monoSettings.color || DEFAULTS.accentColor) : DEFAULTS.accentColor,
+      applyToCalendar: monoSettings ? (monoSettings.applyToCalendar || false) : false,
       disableGlowEffects: monoSettings ? (monoSettings.disableGlowEffects || false) : false,
       liquidGlassEnabled: liquidGlass !== false
     };
@@ -162,6 +165,7 @@ function getOriginalState() {
   var settings = {
     monochromeEnabled: false,
     monochromeColor: DEFAULTS.accentColor,
+    applyToCalendar: false,
     disableGlowEffects: false,
     liquidGlassEnabled: true
   };
@@ -272,10 +276,13 @@ function applySettings() {
     // Monochrome mode - renders icons in a single color
     elysium.ui.setMonochromeMode(s.monochromeEnabled, s.accentColor);
 
+    // Apply monochrome to calendar blocks (off by default to preserve user-set colors)
+    elysium.ui.setMonochromeCalendar(s.applyToCalendarBlocks);
+
     // Glow effects - subtle glow around focused elements
     elysium.ui.setGlowEffects(!s.disableGlowEffects);
 
-    console.log("[MinimalMode] Applied settings - accent: " + s.accentColor + ", corners: " + s.cornerRadius);
+    console.log("[MinimalMode] Applied settings - accent: " + s.accentColor + ", corners: " + s.cornerRadius + ", calendarBlocks: " + s.applyToCalendarBlocks);
     return true;
   } catch (error) {
     console.error("[MinimalMode] Failed to apply settings: " + error);
@@ -311,6 +318,7 @@ function restoreOriginalState() {
     var settings = original.settings;
     elysium.settings.set("liquidGlassEnabled", settings.liquidGlassEnabled);
     elysium.ui.setMonochromeMode(settings.monochromeEnabled, settings.monochromeColor);
+    elysium.ui.setMonochromeCalendar(settings.applyToCalendar);
     elysium.ui.setGlowEffects(!settings.disableGlowEffects);
 
     console.log("[MinimalMode] Restored original settings");
