@@ -2,10 +2,14 @@
   "id": "com.elysium.minimal-mode",
   "name": "Minimal Mode",
   "category": "theme",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "minAppVersion": "1.0.0",
   "author": "Elysium Team",
   "description": "A comprehensive theming plugin demonstrating the hierarchical Token API. Customize per-entity-type calendar colors, styling, layout, and UI positioning. Includes OpenTime export/import hooks for portable plugin data.",
+  "repo": "https://github.com/elysiumis/elysium-minimal-mode",
+  "supportLinks": [
+    { "label": "Website", "url": "https://elysium.is" }
+  ],
   "permissions": ["theme", "write:settings", "customize:ui"],
   "main": "main.js",
   "tags": ["theme", "minimal", "ui", "accessibility", "developer-example"],
